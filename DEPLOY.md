@@ -355,10 +355,42 @@ Daftar periksa:
 | Masih "invalid response" / ERR_SSL_PROTOCOL_ERROR | Blok situs belum termuat — Caddyfile belum ter-`git pull`, atau lupa `-f docker-compose.ultah.yml` |
 | Log Caddy: `could not get certificate` | Port 80 tertutup, atau DNS belum menunjuk ke VPS |
 | Log Caddy: `too many failed authorizations` | Batas percobaan Let's Encrypt — tunggu sekitar satu jam, jangan diulang-ulang |
+| Log Caddy: `Invalid response ... : 522` dengan alamat `2606:4700:...` | Ada record **AAAA** yang mengarah ke Cloudflare — lihat bagian di bawah |
 | 404 di semua halaman | Volume tidak tersambung — cek jalur absolut di `docker-compose.ultah.yml` |
 | Halaman tampil tapi foto kosong | Folder `assets/img` tidak ikut ter-clone |
 | Redirect berulang (ERR_TOO_MANY_REDIRECTS) | Mode SSL Cloudflare masih *Flexible*, ganti ke Full (Strict) |
 | Caddy gagal start, SkriningTB ikut mati | Salah tulis di Caddyfile — lihat `docker compose logs caddy`, perbaiki, jalankan lagi |
+
+### Jebakan record AAAA
+
+Let's Encrypt **mendahulukan IPv6**. Kalau sebuah hostname punya record A ke VPS tapi
+masih menyisakan record AAAA ke tempat lain (misalnya sisa Cloudflare), validasinya
+tidak akan pernah sampai ke Caddy. Gejalanya di log:
+
+```
+Invalid response from http://www.ikhvara.my.id/.well-known/acme-challenge/...: 522
+During secondary validation: 2606:4700:3036::6815:2235
+Cannot negotiate ALPN protocol "acme-tls/1" for tls-alpn-01 challenge
+```
+
+Alamat `2606:4700:…` itu milik Cloudflare, dan `522` adalah kode Cloudflare untuk
+"tidak bisa menghubungi origin".
+
+Periksa tiap hostname:
+
+```bash
+nslookup -type=A ikhvara.my.id
+nslookup -type=AAAA ikhvara.my.id
+nslookup -type=A www.ikhvara.my.id
+nslookup -type=AAAA www.ikhvara.my.id
+```
+
+Yang AAAA harus kosong, kecuali VPS-mu memang punya IPv6 sendiri. Hapus record AAAA
+yang nyasar, atau ubah awan Cloudflare-nya jadi abu-abu (DNS only).
+
+Selama belum beres, **keluarkan dulu hostname yang bermasalah dari blok situs**. Satu
+nama yang gagal membuat seluruh penerbitan sertifikat ikut gagal — termasuk untuk nama
+lain di blok yang sama yang sebenarnya sudah lolos validasi.
 
 Cek isi konfigurasi yang benar-benar dibaca Caddy:
 
