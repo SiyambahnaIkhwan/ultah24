@@ -12,6 +12,20 @@ Caddy yang sudah ada**, cukup ditambah satu blok situs.
 Sertifikat HTTPS diterbitkan sendiri oleh **Caddy lewat Let's Encrypt**, otomatis,
 tanpa perlu menyiapkan apa pun di Cloudflare.
 
+### Dua repo yang terlibat — jangan tertukar
+
+Panduan ini menyentuh **dua** project. Perhatikan nama foldernya, karena tidak sama
+dengan nama repo-nya:
+
+| Repo GitHub | Folder di laptop | Folder di VPS | Isinya |
+|---|---|---|---|
+| `skriningtb` | `C:\Code\puskesmas` | `~/skriningtb` | Docker, Caddy, Laravel |
+| `ultah24` | `C:\Code\Ultah` | `~/ultah24` | Berkas website ulang tahun |
+
+Semua perintah Docker dan berkas Caddy ada di project **skriningtb** —
+di laptop berarti folder `C:\Code\puskesmas`. Repo `ultah24` sengaja tidak punya
+folder `docker/` sama sekali; isinya hanya HTML, CSS, JS, dan foto.
+
 > **Jangan memasang Nginx atau Apache di VPS ini.** Keduanya akan berebut port 80/443
 > dengan container Caddy. Yang gagal start bisa Caddy-nya, dan SkriningTB ikut mati.
 
@@ -52,6 +66,12 @@ Di VPS, masuk ke folder project SkriningTB:
 
 ```bash
 cd ~/skriningtb
+```
+
+Kalau folder itu tidak ada, cari dulu di mana project-nya:
+
+```bash
+find ~ -name docker-compose.prod.yml -not -path '*/node_modules/*' 2>/dev/null
 ```
 
 **a. Pastikan yang dipakai memang Caddyfile biasa** (bukan versi Cloudflare):
@@ -169,11 +189,20 @@ EOF
 
 ## Langkah 4 — Tambahkan blok situs di Caddyfile
 
-Berkasnya ada di repo SkriningTB, jadi sebaiknya diubah **dari komputer sendiri lalu
-di-push**, supaya tidak hilang saat `git pull` berikutnya.
+Berkas yang diubah:
 
-Buka `docker/prod/Caddyfile`, lalu tambahkan blok ini **di bawah** blok
-`{$APP_DOMAIN}` yang sudah ada — jangan menggantikannya:
+```
+C:\Code\puskesmas\docker\prod\Caddyfile
+```
+
+> Ini di project **skriningtb**, yang di laptopmu foldernya bernama `puskesmas`.
+> Bukan di `C:\Code\Ultah` — repo ultah24 memang tidak punya folder `docker/`.
+> Di VPS berkas yang sama ada di `~/skriningtb/docker/prod/Caddyfile`.
+
+Ubahnya **dari laptop lalu di-push**, supaya tidak hilang saat `git pull` berikutnya.
+
+Isi berkas itu sekarang hanya satu blok, diawali `{$APP_DOMAIN} {`. Tambahkan blok di
+bawah ini **setelah kurung tutup** blok tersebut — jangan menggantikannya:
 
 ```
 ikhvara.my.id, www.ikhvara.my.id {
@@ -199,6 +228,51 @@ ikhvara.my.id, www.ikhvara.my.id {
 Tidak ada baris `tls` — itu memang disengaja. Tanpa baris itu Caddy otomatis mengurus
 sertifikat Let's Encrypt sendiri, termasuk perpanjangannya, dan otomatis mengalihkan
 `http://` ke `https://`.
+
+### Hasil akhir berkasnya
+
+Supaya tidak ragu, beginilah isi lengkap `docker/prod/Caddyfile` setelah diubah.
+Bagian atas persis seperti aslinya, bagian bawah yang baru:
+
+```
+{$APP_DOMAIN} {
+	encode gzip
+
+	reverse_proxy app:80 {
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-For {remote_host}
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "same-origin"
+		-Server
+	}
+}
+
+ikhvara.my.id, www.ikhvara.my.id {
+	encode gzip
+
+	root * /srv/ultah24
+	file_server
+
+	@aset path *.jpg *.jpeg *.png *.gif *.webp *.svg *.ico *.woff *.woff2
+	header @aset Cache-Control "public, max-age=2592000, immutable"
+
+	@halaman path *.html *.css *.js /
+	header @halaman Cache-Control "public, max-age=600, must-revalidate"
+
+	header {
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+		-Server
+	}
+}
+```
+
+Indentasinya memakai **tab**, sama seperti berkas aslinya.
 
 Setelah di-push dari komputer:
 
