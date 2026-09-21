@@ -125,7 +125,8 @@
       img.alt = item.cap;
       img.loading = 'lazy';
       img.decoding = 'async';
-      var cap = document.createElement('figcaption');
+      var cap = document.createElement('span');
+      cap.className = 'polaroid__cap';
       cap.textContent = item.cap;
       b.appendChild(img);
       b.appendChild(cap);

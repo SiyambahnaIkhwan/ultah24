@@ -231,7 +231,7 @@ body::after{
   opacity:var(--fade);
   /* di layar lebar, tulisan mulai agak ke bawah supaya wajah tidak tertutup,
      lalu kembali ke tengah saat foto mengecil */
-  --copyY:0vh;
+  --copyY:9vh;
   transform:translate3d(0, calc(var(--copyY) * (1 - var(--p))), 0);
 }
 @media (min-width:641px){ .hero__copy{ --copyY:17vh; } }
@@ -383,8 +383,8 @@ body::after{
   width:100%; aspect-ratio:3/4; object-fit:cover; background:#2b0718;
   border-radius:2px;
 }
-.polaroid figcaption{
-  padding:.7rem .3rem .55rem;
+.polaroid__cap{
+  display:block; padding:.7rem .3rem .55rem;
   font-family:var(--serif); font-style:italic; font-size:.86rem; line-height:1.35;
   color:#5b2137;
 }
