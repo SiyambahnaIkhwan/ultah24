@@ -643,7 +643,7 @@
      10. JALAN
      ======================================================================= */
   function boot() {
-    if (bypass() || isNaN(target)) { openSite(); return; }
+    if (S.matikanHitungMundur || bypass() || isNaN(target)) { openSite(); return; }
     /* selalu cek waktu server dulu, supaya jam perangkat yang dimajukan
        tidak bisa membuka halaman lebih cepat */
     syncTime().then(function () {

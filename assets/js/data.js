@@ -15,6 +15,12 @@ window.SITE = {
   /* Format ISO + zona waktu. +07:00 = WIB. */
   bukaPada: '2026-09-23T00:00:00+07:00',
 
+  /* Sakelar untuk mematikan hitung mundur sementara, supaya isi website
+     bisa dicek sebelum tanggalnya.
+     PENTING: kembalikan ke false sebelum 23 September, kalau tidak
+     websitenya sudah terbuka duluan dan kejutannya hilang. */
+  matikanHitungMundur: true,
+
   /* --- Layar countdown (sebelum waktunya) ------------------------------- */
   gate: {
     untuk: 'Untuk Vanessa Aurora',

@@ -40,6 +40,18 @@ barulah jam perangkat dipakai sebagai cadangan.
 Catatan: ini pengaman ringan, bukan kunci. Isinya tetap ada di dalam berkas halaman,
 jadi orang yang paham teknis masih bisa mengintip. Untuk kejutan ulang tahun, ini sudah cukup.
 
+## Mematikan hitung mundur sementara
+
+Di `assets/js/data.js`:
+
+```js
+matikanHitungMundur: true,   // hitung mundur mati, isi website langsung terbuka
+matikanHitungMundur: false,  // hitung mundur aktif lagi
+```
+
+> Kembalikan ke `false` sebelum 23 September. Kalau tertinggal `true`, websitenya
+> sudah terbuka sebelum waktunya dan kejutannya hilang.
+
 ## Mengetes sebelum tanggalnya
 
 - `?preview=1` — lewati hitung mundur, langsung buka isi website.
