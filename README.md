@@ -57,8 +57,9 @@ npx serve .
 
 ## Memasang di VPS sendiri
 
-Lihat **[DEPLOY.md](DEPLOY.md)** — termasuk cara mengatur Nginx supaya satu VPS bisa
-melayani dua website (skrining TB dan website ini) tanpa saling nyasar.
+Lihat **[DEPLOY.md](DEPLOY.md)** — cara memasang di VPS yang sudah melayani
+`skriningtb.my.id`, supaya `ikhvara.my.id` membuka website ini dan keduanya tidak
+saling nyasar.
 
 ## Memasang di GitHub Pages
 
