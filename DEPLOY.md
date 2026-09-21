@@ -171,19 +171,20 @@ supaya `docker-compose.prod.yml` yang sudah jalan tidak perlu diubah:
 cd ~/skriningtb
 ```
 
+Docker tidak mengenal `~`, jadi jalurnya harus absolut. Biar tidak salah ketik,
+biarkan shell yang mengisinya dari `$HOME`:
+
 ```bash
-cat > docker-compose.ultah.yml <<'EOF'
-# Menyambungkan folder website ulang tahun ke container Caddy.
-# Jalankan bersama docker-compose.prod.yml.
-services:
-  caddy:
-    volumes:
-      - /home/deploy/ultah24:/srv/ultah24:ro
-EOF
+printf 'services:\n  caddy:\n    volumes:\n      - %s/ultah24:/srv/ultah24:ro\n' "$HOME" > docker-compose.ultah.yml
+cat docker-compose.ultah.yml
 ```
 
-> Sesuaikan `/home/deploy/ultah24` kalau nama penggunamu bukan `deploy`.
-> Cek dengan `echo $HOME`. Harus jalur absolut, bukan `~`.
+Hasilnya harus menunjuk folder tempat repo tadi di-clone, misalnya
+`/root/ultah24:/srv/ultah24:ro`.
+
+> **Hati-hati:** kalau jalurnya salah, Docker **tidak** memberi pesan error — ia
+> justru membuat folder kosong di jalur itu, dan Caddy menyajikan folder kosong
+> sebagai **404**. Jadi selalu cocokkan hasil `cat` di atas dengan `ls ~/ultah24`.
 
 ---
 
@@ -356,7 +357,8 @@ Daftar periksa:
 | Log Caddy: `could not get certificate` | Port 80 tertutup, atau DNS belum menunjuk ke VPS |
 | Log Caddy: `too many failed authorizations` | Batas percobaan Let's Encrypt — tunggu sekitar satu jam, jangan diulang-ulang |
 | Log Caddy: `Invalid response ... : 522` dengan alamat `2606:4700:...` | Ada record **AAAA** yang mengarah ke Cloudflare — lihat bagian di bawah |
-| 404 di semua halaman | Volume tidak tersambung — cek jalur absolut di `docker-compose.ultah.yml` |
+| 404 di semua halaman, padahal HTTPS sudah jalan | Volume menunjuk folder yang salah. Bandingkan `docker inspect … {{.Mounts}}` dengan `echo $HOME` — Docker membuat folder kosong kalau jalurnya tidak ada, tanpa pesan error |
+| 404 dan `/srv/ultah24` tidak ada di dalam container | `up -d` dijalankan tanpa `-f docker-compose.ultah.yml` |
 | Halaman tampil tapi foto kosong | Folder `assets/img` tidak ikut ter-clone |
 | Redirect berulang (ERR_TOO_MANY_REDIRECTS) | Mode SSL Cloudflare masih *Flexible*, ganti ke Full (Strict) |
 | Caddy gagal start, SkriningTB ikut mati | Salah tulis di Caddyfile — lihat `docker compose logs caddy`, perbaiki, jalankan lagi |
