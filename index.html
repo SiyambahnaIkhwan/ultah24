@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0106">
+<title>Happy Birthday, Vanessa Aurora</title>
+<meta name="description" content="Sebuah kejutan kecil untuk ulang tahun ke-24 Vanessa Aurora.">
+<meta property="og:title" content="Happy Birthday, Vanessa Aurora">
+<meta property="og:description" content="Sebuah kejutan kecil untuk ulang tahun ke-24.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="assets/img/utama-02.jpg">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%97%3C/text%3E%3C/svg%3E">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Great+Vibes&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+
+<link rel="preload" as="image" href="assets/img/utama-02.jpg">
+</head>
+
+<body class="is-locked">
+
+<canvas id="hearts" class="hearts" aria-hidden="true"></canvas>
+
+<!-- ====================================================================
+     GERBANG / COUNTDOWN
+     ==================================================================== -->
+<div id="gate" class="gate" role="dialog" aria-label="Hitung mundur">
+  <div class="gate__bg" aria-hidden="true"></div>
+  <div class="gate__inner">
+    <div class="gate__lock" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3.5" y="10.5" width="17" height="11" rx="3"></rect>
+        <path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5"></path>
+        <path d="M12 14.4c-.9-1-2.6-.6-2.6.8 0 1.2 1.7 2.3 2.6 3 .9-.7 2.6-1.8 2.6-3 0-1.4-1.7-1.8-2.6-.8z" fill="currentColor" stroke="none"></path>
+      </svg>
+    </div>
+
+    <p class="gate__eyebrow" data-bind="gate.untuk"></p>
+    <h1 class="gate__title" data-bind="gate.judul"></h1>
+    <p class="gate__sub" data-bind="gate.sub"></p>
+
+    <div class="countdown" id="countdown" aria-live="polite">
+      <div class="cd"><span class="cd__num" id="cd-d">--</span><span class="cd__lbl">hari</span></div>
+      <div class="cd"><span class="cd__num" id="cd-h">--</span><span class="cd__lbl">jam</span></div>
+      <div class="cd"><span class="cd__num" id="cd-m">--</span><span class="cd__lbl">menit</span></div>
+      <div class="cd"><span class="cd__num" id="cd-s">--</span><span class="cd__lbl">detik</span></div>
+    </div>
+
+    <p class="gate__note" data-bind="gate.catatan"></p>
+  </div>
+</div>
+
+<noscript>
+  <div class="noscript">Halaman ini butuh JavaScript untuk ditampilkan. Aktifkan JavaScript di browser kamu ya.</div>
+</noscript>
+
+<!-- ====================================================================
+     SITUS
+     ==================================================================== -->
+<main id="site" class="site" hidden>
+
+  <!-- ---------- HERO PARALLAX ---------- -->
+  <section id="hero" class="hero">
+    <div class="hero__sticky">
+      <div class="hero__glow" aria-hidden="true"></div>
+
+      <!-- kolase yang muncul saat scroll -->
+      <div class="hero__collage" id="collage" aria-hidden="true"></div>
+
+      <!-- foto utama -->
+      <div class="hero__stage" id="heroStage">
+        <img class="hero__photo" id="heroPhoto" src="assets/img/utama-02.jpg" alt="Foto utama" fetchpriority="high" decoding="async">
+        <div class="hero__scrim"></div>
+      </div>
+
+      <!-- bingkai kartu (muncul saat foto mengecil) -->
+      <div class="hero__frame" aria-hidden="true"></div>
+
+      <!-- judul -->
+      <div class="hero__copy" id="heroCopy">
+        <p class="hero__l1" data-bind="hero.baris1"></p>
+        <h1 class="hero__l2" data-bind="hero.baris2"></h1>
+        <p class="hero__l3" data-bind="hero.baris3"></p>
+        <p class="hero__meta" data-bind="hero.meta"></p>
+      </div>
+
+      <div class="hero__hint" id="heroHint">
+        <span data-bind="hero.scrollHint"></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+      </div>
+
+      <div class="hero__curtain" id="heroCurtain" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <!-- ---------- UCAPAN ---------- -->
+  <section id="ucapan" class="section section--ucapan">
+    <div class="wrap wrap--narrow center">
+      <p class="eyebrow reveal" data-bind="ucapan.label"></p>
+      <h2 class="display reveal" data-bind="ucapan.kalimat"></h2>
+      <div class="divider reveal" aria-hidden="true"><span>&#10084;</span></div>
+      <div class="lede" id="ucapanParagraf"></div>
+      <p class="big-age reveal" aria-hidden="true">24</p>
+    </div>
+  </section>
+
+  <!-- ---------- SOROTAN / FOTO UTAMA ---------- -->
+  <section id="sorotan" class="section section--sorotan">
+    <div class="marquee" id="marquee1" aria-hidden="true"><div class="marquee__row"></div></div>
+    <div class="marquee marquee--rev" id="marquee2" aria-hidden="true"><div class="marquee__row"></div></div>
+  </section>
+
+  <!-- ---------- KENANGAN ---------- -->
+  <section id="kenangan" class="section section--kenangan">
+    <div class="wrap center">
+      <p class="eyebrow reveal" data-bind="kenangan.label"></p>
+      <h2 class="display reveal" data-bind="kenangan.judul"></h2>
+      <p class="sub reveal" data-bind="kenangan.sub"></p>
+    </div>
+    <div class="wrap">
+      <div class="polaroids" id="polaroids"></div>
+    </div>
+  </section>
+
+  <!-- ---------- SURAT ---------- -->
+  <section id="surat" class="section section--surat">
+    <div class="wrap wrap--narrow center">
+      <p class="eyebrow reveal" data-bind="surat.label"></p>
+      <h2 class="display reveal" data-bind="surat.judul"></h2>
+    </div>
+    <div class="wrap wrap--narrow">
+      <article class="letter reveal">
+        <div class="letter__glow" aria-hidden="true"></div>
+        <p class="letter__open" data-bind="surat.pembuka"></p>
+        <div id="suratIsi"></div>
+        <p class="letter__sign">
+          <span class="letter__signlbl" data-bind="surat.ttdLabel"></span>
+          <span class="letter__signname" data-bind="surat.ttd"></span>
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ---------- HARAPAN ---------- -->
+  <section id="harapan" class="section section--harapan">
+    <div class="wrap center">
+      <p class="eyebrow reveal" data-bind="harapan.label"></p>
+      <h2 class="display reveal" data-bind="harapan.judul"></h2>
+    </div>
+    <div class="wrap">
+      <div class="wishes" id="wishes"></div>
+    </div>
+  </section>
+
+  <!-- ---------- PENUTUP ---------- -->
+  <section id="penutup" class="section section--penutup">
+    <canvas id="confetti" class="confetti" aria-hidden="true"></canvas>
+    <div class="wrap wrap--narrow center">
+      <p class="eyebrow reveal" data-bind="penutup.label"></p>
+      <h2 class="display reveal" data-bind="penutup.judul"></h2>
+      <p class="sub reveal" data-bind="penutup.sub"></p>
+
+      <div class="cake reveal" id="cake">
+        <div class="cake__flames" id="flames"></div>
+        <div class="cake__tier cake__tier--top"></div>
+        <div class="cake__tier cake__tier--mid"></div>
+        <div class="cake__tier cake__tier--bot"></div>
+        <div class="cake__plate"></div>
+      </div>
+
+      <button class="btn" id="blowBtn" type="button"><span data-bind="penutup.tombol"></span></button>
+      <p class="after" id="afterBlow" data-bind="penutup.setelah"></p>
+
+      <p class="salam" id="salam" data-bind="penutup.salam"></p>
+      <p class="foot" data-bind="penutup.footer"></p>
+    </div>
+  </section>
+
+  <!-- ---------- NAV DOCK ---------- -->
+  <nav class="dock" id="dock" aria-label="Navigasi"></nav>
+</main>
+
+<!-- ---------- LIGHTBOX ---------- -->
+<div class="lb" id="lightbox" role="dialog" aria-modal="true" aria-label="Foto" hidden>
+  <button class="lb__close" id="lbClose" type="button" aria-label="Tutup">&times;</button>
+  <button class="lb__nav lb__nav--prev" id="lbPrev" type="button" aria-label="Sebelumnya">&#8249;</button>
+  <button class="lb__nav lb__nav--next" id="lbNext" type="button" aria-label="Berikutnya">&#8250;</button>
+  <figure class="lb__fig">
+    <img id="lbImg" src="" alt="">
+    <figcaption id="lbCap"></figcaption>
+  </figure>
+  <p class="lb__count" id="lbCount"></p>
+</div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>

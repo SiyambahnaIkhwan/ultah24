@@ -1,0 +1,11 @@
+# folder kerja lokal (foto asli & referensi desain)
+# semua foto yang dipakai website sudah disalin ke assets/img/
+Foto/
+Design/
+
+# tooling
+.claude/
+.vscode/
+.DS_Store
+Thumbs.db
+node_modules/
