@@ -9,12 +9,15 @@ Caddy yang sudah ada**, cukup ditambah satu blok situs.
 | `skriningtb.my.id` | Caddy → container `app` (Laravel) | sudah jalan |
 | `ikhvara.my.id` | Caddy → berkas statis di disk | yang akan ditambahkan |
 
+Sertifikat HTTPS diterbitkan sendiri oleh **Caddy lewat Let's Encrypt**, otomatis,
+tanpa perlu menyiapkan apa pun di Cloudflare.
+
 > **Jangan memasang Nginx atau Apache di VPS ini.** Keduanya akan berebut port 80/443
 > dengan container Caddy. Yang gagal start bisa Caddy-nya, dan SkriningTB ikut mati.
 
-Blok Caddy di panduan ini sudah diuji dengan `caddy validate` (kedua versi, biasa dan
-Cloudflare) dan dijalankan sungguhan memakai `caddy:2-alpine` untuk memastikan berkas
-website benar-benar tersaji beserta header cache-nya.
+Blok Caddy di panduan ini sudah diuji dengan `caddy validate` dan dijalankan sungguhan
+memakai `caddy:2-alpine` untuk memastikan berkas website benar-benar tersaji beserta
+header cache-nya.
 
 ---
 
@@ -39,12 +42,11 @@ Memastikannya dari komputer sendiri:
 openssl s_client -connect ikhvara.my.id:443 -servername ikhvara.my.id < /dev/null
 ```
 
-Kalau balasannya `no application protocol` / `handshake failure` / putus begitu saja,
-memang inilah penyebabnya.
+Kalau balasannya `handshake failure` atau putus begitu saja, memang inilah penyebabnya.
 
 ---
 
-## Langkah 0 — Kumpulkan dulu keadaan sekarang
+## Langkah 0 — Periksa dulu keadaan sekarang
 
 Di VPS, masuk ke folder project SkriningTB:
 
@@ -52,97 +54,70 @@ Di VPS, masuk ke folder project SkriningTB:
 cd ~/skriningtb
 ```
 
-**a. Caddyfile mana yang sedang dipakai** (biasa atau versi Cloudflare):
+**a. Pastikan yang dipakai memang Caddyfile biasa** (bukan versi Cloudflare):
 
 ```bash
 docker inspect $(docker compose -f docker-compose.prod.yml ps -q caddy) \
   --format '{{range .Mounts}}{{.Source}} -> {{.Destination}}{{"\n"}}{{end}}'
 ```
 
-Lihat berkas mana yang dipetakan ke `/etc/caddy/Caddyfile`:
-`Caddyfile` (Let's Encrypt) atau `Caddyfile.cloudflare` (Origin Certificate).
+Yang dipetakan ke `/etc/caddy/Caddyfile` seharusnya `docker/prod/Caddyfile`.
+Kalau ternyata `Caddyfile.cloudflare`, lompat ke
+[Kalau memakai Cloudflare Origin Certificate](#kalau-memakai-cloudflare-origin-certificate)
+di bagian akhir.
 
-**b. Firewall dikunci ke Cloudflare atau tidak:**
+**b. Port 80 terbuka atau tidak** — Let's Encrypt membutuhkannya:
 
 ```bash
 sudo ufw status
 ```
 
-Kalau port 80/443 hanya diizinkan dari rentang IP Cloudflare, `ikhvara.my.id` **wajib**
-lewat Cloudflare juga — kalau tidak, permintaannya akan diblokir firewall.
+Harus ada `80/tcp ALLOW`. Kalau port 80 hanya diizinkan dari rentang IP Cloudflare,
+berarti `ikhvara.my.id` juga harus diproksi Cloudflare supaya tantangan sertifikatnya
+bisa lewat.
 
-**c. `ikhvara.my.id` sekarang mengarah ke mana:**
+**c. `ikhvara.my.id` mengarah ke mana:**
 
 ```bash
 nslookup ikhvara.my.id
 ```
 
-IP `104.x` / `172.6x.x` berarti sudah diproksi Cloudflare. IP VPS langsung berarti
-DNS-only.
-
----
-
-## Pilih jalurnya
-
-**Jalur A — `ikhvara.my.id` ikut lewat Cloudflare (dianjurkan)**
-
-Ini yang sejalan dengan susunan sekarang. IP VPS tetap tersembunyi, firewall tidak
-perlu diubah, dan tidak bergantung pada port 80 untuk sertifikat.
-
-**Jalur B — `ikhvara.my.id` langsung ke VPS (DNS only)**
-
-Lebih sedikit langkah, tapi ada konsekuensi yang perlu kamu tahu: **IP VPS jadi
-terekspos**. SkriningTB sengaja disembunyikan di balik Cloudflare; begitu ada domain
-lain yang menunjuk IP aslinya, siapa pun bisa menemukan alamat origin SkriningTB dari
-situ. Dan kalau firewall sudah dikunci ke IP Cloudflare (Langkah 0b), jalur ini tidak
-akan jalan sama sekali.
-
-Kalau ragu, pilih **Jalur A**.
+Harus menghasilkan IP VPS ini (atau IP Cloudflare `104.x`/`172.6x.x` kalau diproksi).
 
 ---
 
 ## Langkah 1 — DNS
-
-### Jalur A (lewat Cloudflare)
-
-1. Tambahkan `ikhvara.my.id` sebagai site baru di Cloudflare, ikuti proses ganti
-   nameserver di tempat kamu beli domain.
-2. Buat record — **ikon awan harus oranye (Proxied)**:
-
-   | Type | Name | Content | Proxy |
-   |---|---|---|---|
-   | A | `@` | IP VPS | Proxied (oranye) |
-   | A | `www` | IP VPS | Proxied (oranye) |
-
-3. **SSL/TLS → Overview → Full (Strict)**.
-4. **SSL/TLS → Origin Server → Create Certificate** untuk zona `ikhvara.my.id`.
-   Simpan *Origin Certificate* dan *Private Key* — dipakai di Langkah 4.
-
-   > Origin Certificate milik `skriningtb.my.id` **tidak** berlaku untuk
-   > `ikhvara.my.id`. Zona berbeda, sertifikatnya harus baru.
-
-### Jalur B (langsung)
 
 | Type | Name | Content |
 |---|---|---|
 | A | `@` | IP VPS |
 | A | `www` | IP VPS |
 
-Pastikan port 80 terbuka untuk umum, karena Caddy memakainya untuk tantangan
-Let's Encrypt.
+Kalau domainnya kamu taruh di Cloudflare dan awannya **oranye** (Proxied), tambahkan
+dua syarat ini supaya Let's Encrypt tetap bisa jalan:
+
+- **SSL/TLS → Full (Strict)**. Jangan *Flexible* — mode itu membuat Cloudflare
+  menghubungi VPS lewat HTTP polos dan biasanya menghasilkan redirect berulang.
+- Port 80 tetap harus bisa dihubungi Cloudflare. Path
+  `/.well-known/acme-challenge/` otomatis dikecualikan Cloudflare dari
+  "Always Use HTTPS", jadi tantangannya lolos.
+
+Kalau awannya abu-abu (DNS only), cukup pastikan port 80 terbuka untuk umum.
+
+> Catatan: kalau `skriningtb.my.id` kamu proksi lewat Cloudflare tapi `ikhvara.my.id`
+> tidak, IP asli VPS jadi terlihat dari `ikhvara.my.id` — dan itu membatalkan
+> penyembunyian IP untuk SkriningTB. Samakan perlakuannya untuk kedua domain.
+
+Tunggu sampai DNS benar-benar menyebar sebelum lanjut, kalau tidak penerbitan
+sertifikatnya gagal.
 
 ---
 
 ## Langkah 2 — Taruh berkas website di VPS
 
-```bash
-cd ~
-git clone https://github.com/SiyambahnaIkhwan/ultah24.git
-```
-
-Repo-nya privat, jadi pakai deploy key seperti waktu memasang SkriningTB. VPS sudah
-punya `~/.ssh/id_ed25519`, tapi kunci itu terdaftar untuk repo `skriningtb` saja —
-satu deploy key hanya bisa dipakai satu repo. Buat kunci kedua:
+Repo `ultah24` privat, jadi butuh deploy key. VPS sudah punya `~/.ssh/id_ed25519`,
+tapi kunci itu terdaftar untuk repo `skriningtb` saja — **satu deploy key hanya bisa
+dipakai satu repo**. Buat kunci kedua:
 
 ```bash
 ssh-keygen -t ed25519 -C "vps-ultah24" -f ~/.ssh/id_ultah24 -N ""
@@ -162,7 +137,7 @@ git clone github-ultah24:SiyambahnaIkhwan/ultah24.git ~/ultah24
 Pastikan berkasnya ada:
 
 ```bash
-ls ~/ultah24/index.html ~/ultah24/assets/img | head
+ls ~/ultah24/index.html && ls ~/ultah24/assets/img | head -3
 ```
 
 ---
@@ -179,7 +154,7 @@ cd ~/skriningtb
 ```bash
 cat > docker-compose.ultah.yml <<'EOF'
 # Menyambungkan folder website ulang tahun ke container Caddy.
-# Jalankan bersama berkas compose yang lain.
+# Jalankan bersama docker-compose.prod.yml.
 services:
   caddy:
     volumes:
@@ -197,11 +172,8 @@ EOF
 Berkasnya ada di repo SkriningTB, jadi sebaiknya diubah **dari komputer sendiri lalu
 di-push**, supaya tidak hilang saat `git pull` berikutnya.
 
-Buka berkas yang tadi ketahuan sedang dipakai di Langkah 0a.
-
-### Kalau yang dipakai `docker/prod/Caddyfile` (Let's Encrypt — Jalur B)
-
-Tambahkan blok ini **di bawah** blok `{$APP_DOMAIN}` yang sudah ada:
+Buka `docker/prod/Caddyfile`, lalu tambahkan blok ini **di bawah** blok
+`{$APP_DOMAIN}` yang sudah ada — jangan menggantikannya:
 
 ```
 ikhvara.my.id, www.ikhvara.my.id {
@@ -224,47 +196,11 @@ ikhvara.my.id, www.ikhvara.my.id {
 }
 ```
 
-### Kalau yang dipakai `docker/prod/Caddyfile.cloudflare` (Jalur A)
+Tidak ada baris `tls` — itu memang disengaja. Tanpa baris itu Caddy otomatis mengurus
+sertifikat Let's Encrypt sendiri, termasuk perpanjangannya, dan otomatis mengalihkan
+`http://` ke `https://`.
 
-Sama, hanya ditambah baris `tls` yang menunjuk sertifikat origin **milik zona
-ikhvara.my.id**:
-
-```
-ikhvara.my.id, www.ikhvara.my.id {
-	tls /etc/caddy/certs/ikhvara.pem /etc/caddy/certs/ikhvara.key
-
-	encode gzip
-
-	root * /srv/ultah24
-	file_server
-
-	@aset path *.jpg *.jpeg *.png *.gif *.webp *.svg *.ico *.woff *.woff2
-	header @aset Cache-Control "public, max-age=2592000, immutable"
-
-	@halaman path *.html *.css *.js /
-	header @halaman Cache-Control "public, max-age=600, must-revalidate"
-
-	header {
-		X-Content-Type-Options "nosniff"
-		Referrer-Policy "same-origin"
-		-Server
-	}
-}
-```
-
-Lalu simpan sertifikat dari Langkah 1 di VPS:
-
-```bash
-cd ~/skriningtb
-nano docker/prod/certs/ikhvara.pem    # tempel Origin Certificate
-nano docker/prod/certs/ikhvara.key    # tempel Private Key
-chmod 600 docker/prod/certs/ikhvara.key
-```
-
-Folder `docker/prod/certs` sudah masuk `.gitignore`, jadi kunci privatnya tidak akan
-ikut ter-commit. Biarkan begitu.
-
-Setelah blok ditambahkan dan di-push dari komputer:
+Setelah di-push dari komputer:
 
 ```bash
 cd ~/skriningtb && git pull
@@ -295,28 +231,9 @@ warn  Unnecessary header_up X-Forwarded-Proto: ...
 warn  Unnecessary header_up X-Forwarded-For: ...
 ```
 
-Kalau muncul `open /etc/caddy/certs/ikhvara.pem: no such file or directory`, berarti
-sertifikat origin di Langkah 4 belum disimpan — `validate` memang ikut memeriksa
-keberadaan berkas sertifikatnya.
-
-Setelah valid, pakai rangkaian `-f` yang sama seperti biasanya, **ditambah** berkas
-baru tadi.
-
-Jalur A (Cloudflare):
+Setelah valid, jalankan:
 
 ```bash
-cd ~/skriningtb
-docker compose \
-  -f docker-compose.prod.yml \
-  -f docker-compose.cloudflare.yml \
-  -f docker-compose.ultah.yml \
-  up -d
-```
-
-Jalur B (Let's Encrypt):
-
-```bash
-cd ~/skriningtb
 docker compose \
   -f docker-compose.prod.yml \
   -f docker-compose.ultah.yml \
@@ -324,15 +241,16 @@ docker compose \
 ```
 
 Tidak perlu `--build` — yang berubah cuma Caddy, bukan image aplikasi. SkriningTB tidak
-ikut dibangun ulang dan praktis tidak terganggu.
+ikut dibangun ulang.
 
-Pantau Caddy:
+Pantau penerbitan sertifikatnya:
 
 ```bash
 docker compose -f docker-compose.prod.yml logs -f caddy
 ```
 
-Di Jalur B, tunggu baris `certificate obtained successfully` untuk `ikhvara.my.id`.
+Tunggu baris `certificate obtained successfully` untuk `ikhvara.my.id`. Biasanya
+beberapa detik sampai satu menit.
 
 ---
 
@@ -361,12 +279,12 @@ Daftar periksa:
 | Gejala | Penyebab biasanya |
 |---|---|
 | Masih "invalid response" / ERR_SSL_PROTOCOL_ERROR | Blok situs belum termuat — Caddyfile belum ter-`git pull`, atau lupa `-f docker-compose.ultah.yml` |
-| Error 521 dari Cloudflare | Firewall memblokir, atau container Caddy mati |
-| Error 526 dari Cloudflare | Mode SSL bukan Full (Strict), atau sertifikat origin salah zona |
+| Log Caddy: `could not get certificate` | Port 80 tertutup, atau DNS belum menunjuk ke VPS |
+| Log Caddy: `too many failed authorizations` | Batas percobaan Let's Encrypt — tunggu sekitar satu jam, jangan diulang-ulang |
 | 404 di semua halaman | Volume tidak tersambung — cek jalur absolut di `docker-compose.ultah.yml` |
 | Halaman tampil tapi foto kosong | Folder `assets/img` tidak ikut ter-clone |
+| Redirect berulang (ERR_TOO_MANY_REDIRECTS) | Mode SSL Cloudflare masih *Flexible*, ganti ke Full (Strict) |
 | Caddy gagal start, SkriningTB ikut mati | Salah tulis di Caddyfile — lihat `docker compose logs caddy`, perbaiki, jalankan lagi |
-| Let's Encrypt gagal (Jalur B) | Port 80 tertutup, atau DNS belum menunjuk VPS |
 
 Cek isi konfigurasi yang benar-benar dibaca Caddy:
 
@@ -374,7 +292,7 @@ Cek isi konfigurasi yang benar-benar dibaca Caddy:
 docker compose -f docker-compose.prod.yml exec caddy cat /etc/caddy/Caddyfile
 ```
 
-Cek folder websitenya benar-benar terlihat dari dalam container:
+Cek folder websitenya terlihat dari dalam container:
 
 ```bash
 docker compose -f docker-compose.prod.yml exec caddy ls /srv/ultah24
@@ -396,7 +314,7 @@ Selesai. Tidak perlu menyentuh Docker sama sekali — Caddy membaca berkasnya la
 dari disk. Kalau perubahan belum kelihatan di browser, tunggu 10 menit (sesuai
 `Cache-Control`) atau muat ulang paksa dengan Ctrl+F5.
 
-Kalau `ikhvara.my.id` diproksi Cloudflare, bersihkan juga cache-nya:
+Kalau domainnya diproksi Cloudflare, bersihkan juga cache-nya:
 **Cloudflare → Caching → Configuration → Purge Everything**.
 
 ---
@@ -407,11 +325,9 @@ Kalau `ikhvara.my.id` diproksi Cloudflare, bersihkan juga cache-nya:
 - **Jangan** menambahkan `-v` pada `docker compose down` — itu menghapus volume
   `dbdata` dan `appstorage`, berarti seluruh data pasien dan foto rontgen hilang.
 - **Jangan** mengubah blok `{$APP_DOMAIN}`, `reverse_proxy app:80`, atau
-  `header_up X-Forwarded-For` milik SkriningTB. Blok baru ditambahkan **di bawahnya**,
-  bukan menggantikannya.
-- **Jangan** membuka port 80/443 untuk umum kalau firewall sudah dikunci ke IP
-  Cloudflare — itu membatalkan perlindungan pembatas laju skrining mandiri, karena
-  header `CF-Connecting-IP` jadi bisa dipalsukan siapa saja.
+  `header_up X-Forwarded-For` milik SkriningTB. Blok baru ditambahkan **di bawahnya**.
+- **Jangan** menutup port 80 setelah sertifikat terbit — Caddy memakainya lagi saat
+  memperpanjang sertifikat tiap 60 hari.
 
 ---
 
@@ -432,3 +348,45 @@ sudo timedatectl set-ntp true
 
 Zona waktu VPS tidak harus WIB — yang dibandingkan adalah waktu UTC, dan tanggal
 targetnya sudah lengkap dengan `+07:00` di `assets/js/data.js`.
+
+---
+
+## Kalau memakai Cloudflare Origin Certificate
+
+Bagian ini **hanya** berlaku kalau Langkah 0a menunjukkan yang terpasang adalah
+`docker/prod/Caddyfile.cloudflare`. Kalau tidak, lewati saja.
+
+Pada mode itu Caddy tidak menerbitkan sertifikat sendiri, jadi blok situsnya butuh
+baris `tls`. Sertifikat origin bersifat per-zona: **milik `skriningtb.my.id` tidak
+berlaku untuk `ikhvara.my.id`**, harus menerbitkan yang baru di
+**Cloudflare → SSL/TLS → Origin Server → Create Certificate** untuk zona
+`ikhvara.my.id`.
+
+Simpan di VPS:
+
+```bash
+cd ~/skriningtb
+nano docker/prod/certs/ikhvara.pem    # tempel Origin Certificate
+nano docker/prod/certs/ikhvara.key    # tempel Private Key
+chmod 600 docker/prod/certs/ikhvara.key
+```
+
+Blok situsnya sama persis seperti Langkah 4, hanya ditambah satu baris di paling atas:
+
+```
+	tls /etc/caddy/certs/ikhvara.pem /etc/caddy/certs/ikhvara.key
+```
+
+Lalu jalankan dengan ketiga berkas compose:
+
+```bash
+docker compose \
+  -f docker-compose.prod.yml \
+  -f docker-compose.cloudflare.yml \
+  -f docker-compose.ultah.yml \
+  up -d
+```
+
+Pada mode ini `caddy validate` ikut memeriksa keberadaan berkas sertifikat — kalau
+muncul `open /etc/caddy/certs/ikhvara.pem: no such file or directory`, berarti
+sertifikatnya belum disimpan.
