@@ -208,8 +208,8 @@ body::after{
 .hero__scrim{
   position:absolute; inset:0;
   background:
-    linear-gradient(180deg, rgba(9,1,10,.72) 0%, rgba(9,1,10,.25) 35%, rgba(9,1,10,.55) 70%, rgba(9,1,10,.9) 100%),
-    radial-gradient(70% 50% at 50% 45%, rgba(9,1,10,.35), transparent 75%);
+    linear-gradient(180deg, rgba(9,1,10,.52) 0%, rgba(9,1,10,.06) 34%, rgba(9,1,10,.34) 68%, rgba(9,1,10,.82) 100%),
+    radial-gradient(72% 52% at 50% 42%, rgba(9,1,10,.16), transparent 78%);
   opacity:calc(1 - .45 * var(--p));
 }
 .hero__frame{
@@ -537,6 +537,9 @@ body::after{
 /* =========================================================================
    LIGHTBOX
    ========================================================================= */
+/* PENTING: tanpa baris ini, [hidden] kalah oleh display:grid dan lapisan
+   lightbox yang tak terlihat akan menutupi seluruh halaman — semua klik mati. */
+.lb[hidden]{ display:none; }
 .lb{
   position:fixed; inset:0; z-index:150;
   display:grid; place-items:center; padding:1rem;

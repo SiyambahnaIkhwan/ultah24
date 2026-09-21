@@ -501,49 +501,124 @@
       cv.width = w * dpr; cv.height = h * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
-    var COLORS = ['#ff4d8d', '#ff97bd', '#ffd6e6', '#ffb93b', '#ffffff'];
+    var PINK = ['#ff4d8d', '#ff2f77', '#ff97bd', '#ffd6e6', '#ffffff'];
+    var CHIP = ['#ff4d8d', '#ff97bd', '#ffd6e6', '#ffb93b', '#ffffff'];
+    var waves = [];
+
+    /* gambar satu hati di titik 0,0 dengan ukuran s */
+    function heartPath(s) {
+      var k = s / 16;
+      ctx.beginPath();
+      ctx.moveTo(0, 5 * k);
+      ctx.bezierCurveTo(-9 * k, -3 * k, -6 * k, -12 * k, 0, -7 * k);
+      ctx.bezierCurveTo(6 * k, -12 * k, 9 * k, -3 * k, 0, 5 * k);
+      ctx.closePath();
+    }
+
+    /* ledakan hati dari atas kue */
     function burst() {
       if (!ctx) return;
-      /* semburan keluar dari atas kue, mengikuti posisinya di layar */
       var cake = $('#cake');
       var cr = cake ? cake.getBoundingClientRect() : null;
       var ox = cr ? cr.left + cr.width / 2 : window.innerWidth / 2;
-      var oy = cr ? cr.top + cr.height * 0.18 : window.innerHeight / 2;
-      for (var i = 0; i < 150; i++) {
+      var oy = cr ? cr.top + cr.height * 0.16 : window.innerHeight / 2;
+      var boost = 0.85 + Math.min(window.innerWidth, window.innerHeight) / 1400;
+
+      /* gelombang kejut */
+      waves.push({ x: ox, y: oy, r: 8, life: 46 });
+      waves.push({ x: ox, y: oy, r: 2, life: 62 });
+
+      /* hati beterbangan ke segala arah */
+      for (var i = 0; i < 64; i++) {
+        var a = Math.random() * Math.PI * 2;
+        var sp = (5 + Math.random() * 16) * boost;
         bits.push({
+          t: 'h',
           x: ox, y: oy,
-          vx: (Math.random() - 0.5) * 18,
-          vy: -7 - Math.random() * 12,
-          g: 0.14 + Math.random() * 0.1,
-          s: 4 + Math.random() * 7,
-          c: COLORS[(Math.random() * COLORS.length) | 0],
-          rot: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.3,
-          life: 150 + Math.random() * 90
+          vx: Math.cos(a) * sp,
+          vy: Math.sin(a) * sp - 4,
+          g: 0.15 + Math.random() * 0.12,
+          s: 12 + Math.random() * 22,
+          c: PINK[(Math.random() * PINK.length) | 0],
+          rot: (Math.random() - 0.5) * 0.8,
+          vr: (Math.random() - 0.5) * 0.16,
+          life: 110 + Math.random() * 80
+        });
+      }
+      /* serpihan confetti sebagai pemanis */
+      for (var j = 0; j < 72; j++) {
+        var b = Math.random() * Math.PI * 2;
+        var q = (4 + Math.random() * 15) * boost;
+        bits.push({
+          t: 'c',
+          x: ox, y: oy,
+          vx: Math.cos(b) * q,
+          vy: Math.sin(b) * q - 4,
+          g: 0.17 + Math.random() * 0.12,
+          s: 4 + Math.random() * 8,
+          c: CHIP[(Math.random() * CHIP.length) | 0],
+          rot: Math.random() * Math.PI,
+          vr: (Math.random() - 0.5) * 0.32,
+          life: 120 + Math.random() * 90
         });
       }
       if (!raf) raf = requestAnimationFrame(step);
     }
+
     function step() {
-      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      var W = window.innerWidth, H = window.innerHeight;
+      ctx.clearRect(0, 0, W, H);
       var alive = 0;
+
+      /* gelombang kejut */
+      for (var k = 0; k < waves.length; k++) {
+        var wv = waves[k];
+        if (wv.life-- <= 0) continue;
+        alive++;
+        wv.r += (330 - wv.r) * 0.09;
+        ctx.save();
+        ctx.globalAlpha = clamp(wv.life / 46, 0, 1) * 0.5;
+        ctx.strokeStyle = '#ff4d8d';
+        ctx.lineWidth = Math.max(1, wv.life / 12);
+        ctx.shadowColor = 'rgba(255,77,141,.9)';
+        ctx.shadowBlur = 24;
+        ctx.beginPath();
+        ctx.arc(wv.x, wv.y, wv.r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
       for (var i = 0; i < bits.length; i++) {
         var b = bits[i];
         if (b.life-- <= 0) continue;
+        if (b.y > H + 80) { b.life = 0; continue; }
         alive++;
-        b.vy += b.g; b.x += b.vx; b.y += b.vy; b.vx *= 0.992; b.rot += b.vr;
+        b.vy += b.g; b.x += b.vx; b.y += b.vy;
+        b.vx *= 0.991; b.vy *= 0.997; b.rot += b.vr;
         ctx.save();
         ctx.translate(b.x, b.y);
         ctx.rotate(b.rot);
-        ctx.globalAlpha = clamp(b.life / 80, 0, 1);
+        ctx.globalAlpha = clamp(b.life / 70, 0, 1);
         ctx.fillStyle = b.c;
-        ctx.fillRect(-b.s / 2, -b.s / 2, b.s, b.s * 0.6);
+        if (b.t === 'h') {
+          ctx.shadowColor = 'rgba(255,77,141,.85)';
+          ctx.shadowBlur = 16;
+          heartPath(b.s);
+          ctx.fill();
+        } else {
+          ctx.fillRect(-b.s / 2, -b.s / 2, b.s, b.s * 0.6);
+        }
         ctx.restore();
       }
+
       if (alive > 0) { raf = requestAnimationFrame(step); }
-      else { bits = []; raf = null; ctx.clearRect(0, 0, window.innerWidth, window.innerHeight); }
+      else { bits = []; waves = []; raf = null; ctx.clearRect(0, 0, W, H); }
     }
 
-    btn.addEventListener('click', function () {
+    var blown = false;
+    function blow() {
+      if (blown) { size(); burst(); return; }   /* ketuk kue lagi = meledak lagi */
+      blown = true;
       btn.classList.add('is-done');
       candles.forEach(function (c, i) {
         setTimeout(function () { c.classList.add('out'); }, i * 170);
@@ -552,7 +627,14 @@
         if (after) after.classList.add('in');
         size(); burst();
       }, candles.length * 170 + 200);
-    });
+    }
+
+    btn.addEventListener('click', blow);
+    var cakeEl = $('#cake');
+    if (cakeEl) {
+      cakeEl.style.cursor = 'pointer';
+      cakeEl.addEventListener('click', blow);
+    }
     window.addEventListener('resize', size);
     size();
   })();

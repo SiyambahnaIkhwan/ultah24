@@ -53,16 +53,15 @@ window.SITE = {
   surat: {
     label: 'Surat Untukmu',
     judul: 'Ditulis Pelan-pelan, dari Hati',
-    pembuka: 'Vanessa sayang,',
+    pembuka: 'Vanessa Sayang',
     isi: [
-      'Aku bukan orang yang pandai merangkai kata. Tapi untuk kamu, aku mau coba.',
-      'Terima kasih sudah bertahan di hari-hari yang tidak selalu mudah. Terima kasih sudah jadi orang yang paling sabar menghadapi aku, dan yang paling dulu percaya waktu yang lain masih ragu.',
-      'Aku ingat perjalanan-perjalanan kita: dinginnya subuh di jalur pendakian, ngos-ngosan tapi kamu tetap mau lanjut, sampai akhirnya kita berdiri di puncak dan semuanya terasa sepadan. Hidup bareng kamu rasanya persis seperti itu.',
-      'Di usia 24 ini aku tidak minta banyak untuk kamu. Cukup sehat, cukup tenang, dan jangan pernah merasa sendirian, karena aku ada, dan akan terus ada.',
-      'Selamat ulang tahun, sayang. Terima kasih sudah jadi kamu.'
+      'surat ini kutulis untukmu, sebagai ganti diriku yang tak bisa menemanimu',
+      'semoga hari-harimu dipenuhi kebahagiaan dan selalu dikelilingi oleh keberuntungan',
+      'maafkan aku yang tak selalu ada dan tak selalu bisa untuk membahagiakanmu',
+      'semoga hadiah kecil ini dapat mengobati lara dan membawa tawa'
     ],
-    ttdLabel: 'Suamimu,',
-    ttd: 'Ikhwan'
+    ttdLabel: 'Suamimu',
+    ttd: 'Siyambahna Ikhwan'
   },
 
   /* --- Harapan ---------------------------------------------------------- */
@@ -99,8 +98,8 @@ window.SITE = {
   /* --- FOTO UTAMA (hero + kolase parallax) ------------------------------ */
   /* Item pertama = foto hero utama. Sisanya jadi kolase di sekelilingnya.  */
   utama: [
-    { src: 'assets/img/utama-02.jpg', cap: 'Hari saat semua doa akhirnya terjawab' },
     { src: 'assets/img/utama-01.jpg', cap: 'Kamu, dan caramu bikin aku kehabisan kata' },
+    { src: 'assets/img/utama-02.jpg', cap: 'Hari saat semua doa akhirnya terjawab' },
     { src: 'assets/img/utama-03.jpg', cap: 'Sederhana, tapi paling berkesan' },
     { src: 'assets/img/utama-08.jpg', cap: 'Malam terbaik selalu yang ada kamunya' },
     { src: 'assets/img/utama-04.jpg', cap: 'Pulang ke rumah, bareng kamu' },
